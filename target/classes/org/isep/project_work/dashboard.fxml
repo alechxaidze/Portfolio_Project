@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.HBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="controller.MainController">
+    <top>
+        <ToolBar>
+            <Label text="Portfolio Manager" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
+            <Region HBox.hgrow="ALWAYS" style="-fx-min-width: 0; -fx-pref-width: 10000;"/>
+            <Label fx:id="userLabel" text="Welcome, Guest"/>
+            <Button text="Logout" onAction="#handleLogout"/>
+        </ToolBar>
+    </top>
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE" fx:id="mainTabPane">
+            <tabs>
+                <Tab text="📊 Portfolios" fx:id="portfoliosTab">
+                    <content>
+                        <fx:include source="portfolio.fxml" fx:id="portfolio"/>
+                    </content>
+                </Tab>
+                <Tab text="💰 Savings" fx:id="savingsTab">
+                    <content>
+                        <fx:include source="savings.fxml" fx:id="savings"/>
+                    </content>
+                </Tab>
+                <Tab text="📈 Analysis" fx:id="analysisTab">
+                    <content>
+                        <fx:include source="charts.fxml" fx:id="charts"/>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
+</BorderPane>

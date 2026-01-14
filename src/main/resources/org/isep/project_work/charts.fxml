@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="controller.ChartController">
+    <padding><Insets top="15" right="15" bottom="15" left="15"/></padding>
+
+    <HBox spacing="15" alignment="CENTER_LEFT">
+        <Label text="Portfolio:" style="-fx-font-weight: bold;"/>
+        <ComboBox fx:id="portfolioSelector" prefWidth="200"/>
+        
+        <Label text="From:"/>
+        <DatePicker fx:id="startDatePicker" prefWidth="130"/>
+        
+        <Label text="To:"/>
+        <DatePicker fx:id="endDatePicker" prefWidth="130"/>
+        
+        <CheckBox fx:id="showEventsCheckbox" text="Show Events"/>
+        <CheckBox fx:id="overlayPortfoliosCheckbox" text="Overlay All"/>
+        
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Refresh" onAction="#handleRefresh"/>
+        <Button text="Add Event" onAction="#handleAddEvent" styleClass="primary-button"/>
+    </HBox>
+
+    <Label fx:id="summaryLabel" text="Select a portfolio" style="-fx-font-size: 14px; -fx-padding: 10; -fx-background-color: #2a2a3a; -fx-background-radius: 5;"/>
+    
+    <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
+        <VBox spacing="5">
+            <Label text="Portfolio Value Over Time" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+            <LineChart fx:id="historyChart" VBox.vgrow="ALWAYS" animated="false">
+                <xAxis><CategoryAxis label="Date"/></xAxis>
+                <yAxis><NumberAxis label="Value" side="LEFT"/></yAxis>
+            </LineChart>
+        </VBox>
+
+        <VBox spacing="10">
+            <Label text="Asset Allocation" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+            <PieChart fx:id="allocationChart" prefHeight="250" labelsVisible="true"/>
+            
+            <Label text="Events" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+            <ListView fx:id="eventList" VBox.vgrow="ALWAYS" prefHeight="150"/>
+        </VBox>
+    </SplitPane>
+</VBox>
