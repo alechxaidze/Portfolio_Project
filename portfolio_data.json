@@ -18,12 +18,12 @@
       "globalEvents" : [ ],
       "preferredCurrency" : "USD"
     },
-    "preet" : {
-      "name" : "preet",
-      "email" : "preet",
-      "password" : "preet",
+    "alex@gmail.com" : {
+      "name" : "aleksandre",
+      "email" : "alex@gmail.com",
+      "password" : "Aleksandre.123",
       "portfolios" : [ {
-        "id" : "e199e025-2b73-4aa0-bd97-70cffda771e2",
+        "id" : "44dbf57a-2c04-4f24-ba6d-f91d4098d3bd",
         "name" : "My Portfolio",
         "description" : null,
         "assets" : [ ],
@@ -31,10 +31,10 @@
         "events" : [ ],
         "snapshots" : [ ],
         "referenceCurrency" : "USD",
-        "totalValue" : 0.0,
-        "profitLoss" : 0.0,
         "totalCost" : 0.0,
-        "profitLossPercent" : 0.0
+        "profitLossPercent" : 0.0,
+        "profitLoss" : 0.0,
+        "totalValue" : 0.0
       } ],
       "savingsAccounts" : [ ],
       "globalEvents" : [ ],

@@ -13,9 +13,11 @@ import java.util.List;
 public class ImportService {
 
     private static final DateTimeFormatter ISO_FORMAT = DateTimeFormatter.ISO_DATE_TIME;
+    private static final DateTimeFormatter BINANCE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public ImportService() {
     }
+
     public List<Transaction> importCoinbaseCSV(File file, Portfolio targetPortfolio) throws IOException {
         List<Transaction> transactions = new ArrayList<>();
 
@@ -99,7 +101,83 @@ public class ImportService {
         return parts.toArray(new String[0]);
     }
 
-    private double parseDouble(String value) {
+    /**
+     * Import transactions from Binance CSV export
+     */
+    public List<Transaction> importBinanceCSV(File file, Portfolio targetPortfolio) throws IOException {
+        List<Transaction> transactions = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            int lineNum = 0;
+            while ((line = reader.readLine()) != null) {
+                lineNum++;
+                // Skip header and empty lines
+                if (lineNum == 1 || line.trim().isEmpty()) {
+                    continue;
+                }
+                try {
+                    Transaction tx = parseBinanceLine(line);
+                    if (tx != null) {
+                        transactions.add(tx);
+                        if (tx.getType().equals("BUY") || tx.getType().equals("DEPOSIT")) {
+                            addOrUpdateAsset(targetPortfolio, tx);
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to parse Binance line " + lineNum + ": " + line + " - " + e.getMessage());
+                }
+            }
+        }
+        UserService.save();
+        return transactions;
+    }
+
+    /**
+     * Parse a Binance CSV line
+     * Expected format: Date,Coin,Change,Remark
+     * Example: 2021-01-15 10:30:45,BTC,0.5,Buy
+     */
+    private Transaction parseBinanceLine(String line) {
+        String[] parts = parseCSVLine(line);
+
+        if (parts.length < 4) {
+            return null;
+        }
+
+        String dateStr = parts[0].trim();
+        String coin = parts[1].trim().toUpperCase();
+        double change = parseDouble(parts[2]);
+        String remark = parts[3].trim().toUpperCase();
+
+        // Determine transaction type
+        String type = "BUY";
+        if (remark.contains("SELL") || remark.contains("SOLD")) {
+            type = "SELL";
+        } else if (remark.contains("WITHDRAW")) {
+            type = "SELL";
+        } else if (remark.contains("DEPOSIT")) {
+            type = "BUY";
+        }
+
+        LocalDateTime timestamp;
+        try {
+            timestamp = LocalDateTime.parse(dateStr, BINANCE_FORMAT);
+        } catch (Exception e) {
+            timestamp = LocalDateTime.now();
+        }
+
+        // Mock price lookup (in real scenario, would fetch from API)
+        ApiService apiService = new ApiService();
+        double price = apiService.getCurrentPrice(coin);
+
+        Transaction tx = new Transaction(coin, type, Math.abs(change), price, timestamp);
+        tx.setCurrency("USD");
+        tx.setTotal(Math.abs(change) * price);
+        tx.setFees(0);
+
+        return tx;
+    }
         try {
             String cleaned = value.replace(",", ".").replaceAll("[^0-9.]", "");
             return Double.parseDouble(cleaned);

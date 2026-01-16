@@ -4,14 +4,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import model.User;
+import util.XORCoder;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 public class UserService {
     private static final String DATA_FILE = "portfolio_data.json";
+    private static final String ENCRYPTION_KEY = "portfolio_secret_key_2025";
     private static UserService instance;
+    private static boolean encryptionEnabled = true;
 
     private Map<String, User> users;
     private User currentUser;
@@ -71,7 +77,16 @@ public class UserService {
         File file = new File(DATA_FILE);
         if (file.exists()) {
             try {
-                UserData data = objectMapper.readValue(file, UserData.class);
+                String content;
+                if (encryptionEnabled) {
+                    byte[] encryptedData = Files.readAllBytes(Paths.get(DATA_FILE));
+                    byte[] decryptedData = XORCoder.codeDecode(encryptedData, ENCRYPTION_KEY.getBytes());
+                    content = new String(decryptedData);
+                } else {
+                    content = new String(Files.readAllBytes(Paths.get(DATA_FILE)));
+                }
+                
+                UserData data = objectMapper.readValue(content, UserData.class);
                 if (data != null && data.getUsers() != null) {
                     this.users = data.getUsers();
                 }
@@ -86,7 +101,15 @@ public class UserService {
         try {
             UserData data = new UserData();
             data.setUsers(users);
-            objectMapper.writeValue(new File(DATA_FILE), data);
+            String jsonContent = objectMapper.writeValueAsString(data);
+            
+            if (encryptionEnabled) {
+                byte[] encryptedData = XORCoder.codeDecode(jsonContent.getBytes(), ENCRYPTION_KEY.getBytes());
+                Files.write(Paths.get(DATA_FILE), encryptedData);
+            } else {
+                Files.write(Paths.get(DATA_FILE), jsonContent.getBytes());
+            }
+            
             System.out.println("Saved " + users.size() + " users to " + DATA_FILE);
         } catch (IOException e) {
             System.err.println("Failed to save data: " + e.getMessage());
@@ -107,6 +130,14 @@ public class UserService {
 
     public static boolean isLoggedIn() {
         return getInstance().currentUser != null;
+    }
+
+    public static void setEncryptionEnabled(boolean enabled) {
+        encryptionEnabled = enabled;
+    }
+
+    public static boolean isEncryptionEnabled() {
+        return encryptionEnabled;
     }
     public static class UserData {
         private Map<String, User> users;
