@@ -3,58 +3,78 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<HBox xmlns="http://javafx.com/javafx"
+<VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="controller.PortfolioController"
       stylesheets="@styles.css"
       styleClass="page"
       spacing="16">
 
-    <!-- Left: sidebar form -->
-    <VBox styleClass="sidebar" spacing="12" prefWidth="320">
-        <Label text="Portfolio" styleClass="h2"/>
-        <Label text="Add an asset and track your performance." styleClass="muted small"/>
+    <!-- Top: Portfolio Selector and Info -->
+    <HBox spacing="10" alignment="CENTER_LEFT" styleClass="card" style="-fx-padding: 10;">
+        <Label text="Selected Portfolio:" styleClass="muted"/>
+        <ComboBox fx:id="portfolioSelector" prefWidth="200" promptText="Choose Portfolio"/>
+        <Button text="New" onAction="#handleCreatePortfolio" styleClass="btn-secondary"/>
+        <Button text="Clone" onAction="#handleClonePortfolio" styleClass="btn-secondary"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <VBox alignment="CENTER_RIGHT">
+            <Label fx:id="portfolioNameLabel" styleClass="h2" text="Portfolio Name"/>
+            <Label fx:id="portfolioDescLabel" styleClass="muted" text="Description"/>
+        </VBox>
+    </HBox>
 
-        <Label text="Asset Type" styleClass="muted"/>
-        <ComboBox fx:id="assetTypeBox" promptText="Stock / Crypto / Other"/>
+    <HBox spacing="16" VBox.vgrow="ALWAYS">
+        <!-- Left: sidebar form -->
+        <VBox styleClass="sidebar" spacing="12" prefWidth="320">
+            <Label text="Portfolio" styleClass="h2"/>
+            <Label text="Add an asset and track your performance." styleClass="muted small"/>
 
-        <Label text="Symbol" styleClass="muted"/>
-        <TextField fx:id="symbolField" promptText="e.g. AAPL or BTC"/>
+            <Label text="Asset Type" styleClass="muted"/>
+            <ComboBox fx:id="assetTypeBox" promptText="Stock / Crypto / Other"/>
 
-        <Label text="Quantity" styleClass="muted"/>
-        <TextField fx:id="quantityField" promptText="e.g. 10"/>
+            <Label text="Symbol" styleClass="muted"/>
+            <TextField fx:id="symbolField" promptText="e.g. AAPL or BTC"/>
 
-        <Label text="Buy Price" styleClass="muted"/>
-        <TextField fx:id="buyPriceField" promptText="e.g. 150.5"/>
+            <Label text="Quantity" styleClass="muted"/>
+            <TextField fx:id="quantityField" promptText="e.g. 10"/>
 
-        <Button text="Add Asset" styleClass="btn-primary" onAction="#handleAddAsset" maxWidth="Infinity"/>
+            <Label text="Buy Price" styleClass="muted"/>
+            <TextField fx:id="buyPriceField" promptText="e.g. 150.5"/>
 
-        <Label fx:id="messageLabel" text="" styleClass="small"/>
-    </VBox>
+            <Button text="Add Asset"
+                    styleClass="btn-primary"
+                    onAction="#handleAddAsset"
+                    maxWidth="Infinity"/>
 
-    <!-- Right: table -->
-    <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
-        <HBox alignment="CENTER_LEFT" spacing="10">
-            <Label text="Your Assets" styleClass="h2"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Button text="Refresh Prices" onAction="#refreshPrices"/>
-            <Button text="Back to Dashboard" onAction="#goToDashboard"/>
-        </HBox>
+            <Label fx:id="messageLabel" text="" styleClass="small"/>
+        </VBox>
 
-        <TableView fx:id="assetsTable" VBox.vgrow="ALWAYS">
-            <columns>
-                <TableColumn fx:id="colType" text="Type" prefWidth="100"/>
-                <TableColumn fx:id="colSymbol" text="Symbol" prefWidth="120"/>
-                <TableColumn fx:id="colQty" text="Qty" prefWidth="80"/>
-                <TableColumn fx:id="colBuy" text="Buy Price" prefWidth="120"/>
-                <TableColumn fx:id="colNow" text="Current Price" prefWidth="140"/>
-                <TableColumn fx:id="colValue" text="Value" prefWidth="120"/>
-            </columns>
-        </TableView>
+        <!-- Right: table -->
+        <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="Your Assets" styleClass="h2"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Import CSV" onAction="#importCSV"/>
+                <Button text="Refresh Prices" onAction="#refreshPrices"/>
+            </HBox>
 
-        <HBox spacing="10" alignment="CENTER_RIGHT">
-            <Button text="Remove Selected" styleClass="btn-danger" onAction="#removeSelected"/>
-        </HBox>
-    </VBox>
+            <TableView fx:id="assetsTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colType" text="Type" prefWidth="100"/>
+                    <TableColumn fx:id="colSymbol" text="Symbol" prefWidth="120"/>
+                    <TableColumn fx:id="colQty" text="Qty" prefWidth="80"/>
+                    <TableColumn fx:id="colBuy" text="Buy Price" prefWidth="120"/>
+                    <TableColumn fx:id="colNow" text="Current Price" prefWidth="140"/>
+                    <TableColumn fx:id="colValue" text="Value" prefWidth="120"/>
+                </columns>
+            </TableView>
 
-</HBox>
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Remove Selected"
+                        styleClass="btn-danger"
+                        onAction="#removeSelected"/>
+            </HBox>
+        </VBox>
+    </HBox>
+
+</VBox>

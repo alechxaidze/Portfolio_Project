@@ -1,13 +1,11 @@
 package controller;
 
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.stage.FileChooser;
 import model.Asset;
 import model.AssetType;
 import model.Portfolio;
@@ -15,19 +13,47 @@ import model.User;
 import org.isep.project_work.MainApp;
 import service.ApiService;
 import service.UserService;
+import javafx.scene.control.TextInputDialog;
 
+import java.io.File;
 import java.util.Optional;
 
 public class PortfolioController {
+    @FXML
+    private TableView<Asset> assetsTable;
+    @FXML
+    private TableColumn<Asset, String> colType;
+    @FXML
+    private TableColumn<Asset, String> colSymbol;
+    @FXML
+    private TableColumn<Asset, String> colQty;
+    @FXML
+    private TableColumn<Asset, String> colBuy;
+    @FXML
+    private TableColumn<Asset, String> colNow;
+    @FXML
+    private TableColumn<Asset, String> colValue;
 
-    @FXML private Label portfolioValueLabel;
-    @FXML private TableView<Asset> assetsTable;
+    @FXML
+    private Label messageLabel;
+    @FXML
+    private ComboBox<Portfolio> portfolioSelector;
+    @FXML
+    private Label portfolioNameLabel;
+    @FXML
+    private Label portfolioDescLabel;
 
-    @FXML private TextField symbolField;
-    @FXML private ComboBox<AssetType> typeBox;
-    @FXML private TextField quantityField;
-    @FXML private TextField priceField;
+    // Form controls (needed for handleAddAsset)
+    @FXML
+    private ComboBox<AssetType> assetTypeBox;
+    @FXML
+    private TextField symbolField;
+    @FXML
+    private TextField quantityField;
+    @FXML
+    private TextField buyPriceField;
 
+    private final service.ImportService importService = new service.ImportService();
     private final ApiService apiService = new ApiService();
     private final ObservableList<Asset> tableItems = FXCollections.observableArrayList();
 
@@ -35,144 +61,319 @@ public class PortfolioController {
 
     @FXML
     public void initialize() {
-        if (typeBox != null) {
-            typeBox.setItems(FXCollections.observableArrayList(AssetType.values()));
-            typeBox.getSelectionModel().select(AssetType.STOCK);
+        if (assetTypeBox != null) {
+            assetTypeBox.setItems(FXCollections.observableArrayList(AssetType.values()));
+            assetTypeBox.getSelectionModel().select(AssetType.STOCK);
         }
 
         if (assetsTable != null) {
             assetsTable.setItems(tableItems);
         }
 
-        loadOrCreatePortfolio();
-        refreshTableAndTotals();
+        setupColumns();
+        setupPortfolioSelector();
+        setMessage("");
     }
+
+    private void setupPortfolioSelector() {
+        if (portfolioSelector != null) {
+            User user = UserService.getCurrentUser();
+            if (user != null) {
+                portfolioSelector.setItems(FXCollections.observableArrayList(user.getPortfolios()));
+
+                // Select the first one by default if none selected
+                if (portfolio == null && !user.getPortfolios().isEmpty()) {
+                    portfolio = user.getPortfolios().get(0);
+                }
+
+                portfolioSelector.setValue(portfolio);
+
+                portfolioSelector.setOnAction(e -> {
+                    portfolio = portfolioSelector.getValue();
+                    refreshPortfolioView();
+                });
+            }
+        }
+        refreshPortfolioView();
+    }
+
+    private void refreshPortfolioView() {
+        if (portfolio != null) {
+            portfolioNameLabel.setText(portfolio.getName());
+            portfolioDescLabel.setText(portfolio.getDescription() != null ? portfolio.getDescription() : "");
+        }
+        refreshTable();
+    }
+
+    private void setupColumns() {
+        if (colType != null) {
+            colType.setCellValueFactory(c -> new SimpleStringProperty(safe(c.getValue().getType())));
+        }
+        if (colSymbol != null) {
+            colSymbol.setCellValueFactory(c -> new SimpleStringProperty(safe(c.getValue().getSymbol())));
+        }
+        if (colQty != null) {
+            colQty.setCellValueFactory(c -> new SimpleStringProperty(format2(c.getValue().getQuantity())));
+        }
+        if (colBuy != null) {
+            colBuy.setCellValueFactory(c -> new SimpleStringProperty(format2(getBuyPriceSafe(c.getValue()))));
+        }
+        if (colNow != null) {
+            colNow.setCellValueFactory(c -> new SimpleStringProperty(format2(c.getValue().getCurrentPrice())));
+        }
+        if (colValue != null) {
+            colValue.setCellValueFactory(c -> {
+                Asset a = c.getValue();
+                double value = a.getQuantity() * a.getCurrentPrice();
+                return new SimpleStringProperty(format2(value));
+            });
+        }
+    }
+
+    // ---------- Actions ----------
 
     @FXML
     private void handleAddAsset() {
-        if (portfolio == null) {
-            showError("No portfolio", "Could not find or create a portfolio.");
+        setMessage("");
+
+        if (!ensurePortfolio())
+            return;
+
+        String symbol = text(symbolField).toUpperCase();
+        AssetType type = (assetTypeBox == null) ? null : assetTypeBox.getValue();
+
+        Double qty = parseNumber(text(quantityField));
+        Double buy = parseNumber(text(buyPriceField));
+
+        if (symbol.isBlank() || type == null || qty == null || buy == null) {
+            showError("Input Error", "Please fill all fields correctly.");
+            return;
+        }
+        if (qty <= 0) {
+            showError("Input Error", "Quantity must be greater than 0.");
             return;
         }
 
-        String symbol = safeUpper(symbolField);
-        AssetType type = typeBox != null ? typeBox.getValue() : null;
-        Double quantity = parseDouble(quantityField, "Quantity");
-        Double price = parseDouble(priceField, "Price per unit");
-
-        if (symbol.isEmpty() || type == null || quantity == null || price == null) return;
-
-        if (quantity <= 0 || price < 0) {
-            showError("Invalid values", "Quantity must be > 0 and price must be >= 0.");
-            return;
-        }
-
-        Asset asset = new Asset(symbol, symbol, type, quantity, price);
+        Asset asset = new Asset(symbol, symbol, type, qty, buy);
 
         try {
-            double latest = apiService.getCurrentPrice(symbol);
-            if (latest > 0) asset.setCurrentPrice(latest);
-        } catch (Exception ignored) {}
+            double live = apiService.getCurrentPrice(symbol);
+            asset.setCurrentPrice(live > 0 ? live : buy);
+        } catch (Exception e) {
+            asset.setCurrentPrice(buy);
+        }
+
+        // Log transaction event
+        if (portfolio != null) {
+            String title = "Added " + qty + " " + symbol;
+            String desc = String.format("Manually added %s units of %s at %s each.", qty, symbol, format2(buy));
+            portfolio.addEvent(
+                    new model.Event(title, desc, java.time.LocalDate.now(), model.EventType.OTHER, portfolio.getId()));
+        }
 
         portfolio.addAsset(asset);
         UserService.save();
 
         clearInputs();
-        refreshTableAndTotals();
+        refreshTable();
+        setMessage("Asset added to " + portfolio.getName());
+    }
+
+    @FXML
+    private void handleCreatePortfolio() {
+        TextInputDialog dialog = new TextInputDialog("New Portfolio");
+        dialog.setTitle("Create Portfolio");
+        dialog.setHeaderText("Create a new portfolio to track different assets.");
+        dialog.setContentText("Portfolio Name:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(name -> {
+            Portfolio p = new Portfolio(name);
+            User user = UserService.getCurrentUser();
+            if (user != null) {
+                user.addPortfolio(p);
+                UserService.save();
+                setupPortfolioSelector();
+                portfolioSelector.setValue(p);
+                setMessage("Portfolio '" + name + "' created.");
+            }
+        });
+    }
+
+    @FXML
+    private void handleClonePortfolio() {
+        if (portfolio == null)
+            return;
+
+        TextInputDialog dialog = new TextInputDialog(portfolio.getName() + " (Copy)");
+        dialog.setTitle("Clone Portfolio");
+        dialog.setHeaderText("Clone '" + portfolio.getName() + "' with all its assets.");
+        dialog.setContentText("New Name:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(newName -> {
+            Portfolio cloned = portfolio.clone(newName);
+            User user = UserService.getCurrentUser();
+            if (user != null) {
+                user.addPortfolio(cloned);
+                UserService.save();
+                setupPortfolioSelector();
+                portfolioSelector.setValue(cloned);
+                setMessage("Portfolio cloned as '" + newName + "'");
+            }
+        });
+    }
+
+    @FXML
+    private void importCSV() {
+        setMessage("");
+
+        if (!ensurePortfolio())
+            return;
+
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Import CSV");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+
+        File file = chooser.showOpenDialog(assetsTable.getScene().getWindow());
+        if (file == null)
+            return;
+
+        try {
+            importService.importCSV(file, portfolio);
+
+            // Log import event
+            String title = "CSV Data Import";
+            String desc = "Successfully imported transaction data from: " + file.getName();
+            portfolio.addEvent(
+                    new model.Event(title, desc, java.time.LocalDate.now(), model.EventType.OTHER, portfolio.getId()));
+
+            UserService.save();
+            refreshTable();
+            setMessage("Import successful ✅");
+        } catch (Exception e) {
+            showError("CSV Import Failed", e.getMessage());
+        }
     }
 
     @FXML
     private void refreshPrices() {
-        if (portfolio == null || portfolio.getAssets().isEmpty()) return;
+        setMessage("");
 
-        for (Asset asset : portfolio.getAssets()) {
+        if (!ensurePortfolio())
+            return;
+
+        if (portfolio.getAssets() == null || portfolio.getAssets().isEmpty()) {
+            setMessage("No assets to refresh.");
+            return;
+        }
+
+        for (Asset a : portfolio.getAssets()) {
             try {
-                double latest = apiService.getCurrentPrice(asset.getSymbol());
-                if (latest > 0) asset.setCurrentPrice(latest);
-            } catch (Exception ignored) {}
+                double live = apiService.getCurrentPrice(a.getSymbol());
+                if (live > 0)
+                    a.setCurrentPrice(live);
+            } catch (Exception ignored) {
+            }
         }
 
         UserService.save();
-        refreshTableAndTotals();
+        assetsTable.refresh();
+        setMessage("Prices updated ✅");
     }
 
     @FXML
     private void removeSelected() {
-        if (portfolio == null) return;
+        setMessage("");
 
-        Asset selected = assetsTable != null ? assetsTable.getSelectionModel().getSelectedItem() : null;
+        if (!ensurePortfolio())
+            return;
+
+        Asset selected = assetsTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            showError("Nothing selected", "Select an asset in the table first.");
+            showError("Remove", "Select an asset first.");
             return;
         }
 
         portfolio.removeAsset(selected);
         UserService.save();
-        refreshTableAndTotals();
+        refreshTable();
+        setMessage("Removed ");
     }
 
     @FXML
     private void goToDashboard() {
         MainApp.showDashboard();
     }
-    private void loadOrCreatePortfolio() {
-        User user = UserService.getCurrentUser();
-        if (user == null) {
-            portfolio = null;
-            return;
-        }
 
-        Optional<Portfolio> first = user.getPortfolios().stream().findFirst();
-        portfolio = first.orElseGet(() -> {
-            Portfolio created = new Portfolio("My Portfolio");
-            user.addPortfolio(created);
-            UserService.save();
-            return created;
-        });
+    /**
+     * Refreshes the table with assets from the currently selected portfolio.
+     */
+    private void refreshTable() {
+        tableItems.clear();
+        if (portfolio != null && portfolio.getAssets() != null) {
+            tableItems.addAll(portfolio.getAssets());
+        }
+        if (assetsTable != null)
+            assetsTable.refresh();
     }
 
-    private void refreshTableAndTotals() {
-        tableItems.clear();
-        if (portfolio != null) tableItems.addAll(portfolio.getAssets());
-
-        if (portfolioValueLabel != null) {
-            double total = portfolio != null ? portfolio.getTotalValue() : 0.0;
-            portfolioValueLabel.setText(String.format("$%.2f", total));
-        }
+    private double getBuyPriceSafe(Asset asset) {
+        return asset != null ? asset.getAvgPurchasePrice() : 0.0;
     }
 
     private void clearInputs() {
-        if (symbolField != null) symbolField.clear();
-        if (quantityField != null) quantityField.clear();
-        if (priceField != null) priceField.clear();
-        if (typeBox != null) typeBox.getSelectionModel().select(AssetType.STOCK);
+        if (symbolField != null)
+            symbolField.clear();
+        if (quantityField != null)
+            quantityField.clear();
+        if (buyPriceField != null)
+            buyPriceField.clear();
+        if (assetTypeBox != null)
+            assetTypeBox.getSelectionModel().selectFirst();
     }
 
-    private static String safeUpper(TextField field) {
-        if (field == null || field.getText() == null) return "";
-        return field.getText().trim().toUpperCase();
+    private void setMessage(String msg) {
+        if (messageLabel != null)
+            messageLabel.setText(msg == null ? "" : msg);
     }
 
-    private Double parseDouble(TextField field, String label) {
-        if (field == null) return null;
-        String raw = field.getText() == null ? "" : field.getText().trim();
-        if (raw.isEmpty()) {
-            showError("Missing value", "Please enter " + label.toLowerCase() + ".");
+    private static String text(TextField f) {
+        return (f == null || f.getText() == null) ? "" : f.getText().trim();
+    }
+
+    private static String safe(Object o) {
+        return o == null ? "" : String.valueOf(o);
+    }
+
+    private static String format2(double v) {
+        return String.format("%.2f", v);
+    }
+
+    private static Double parseNumber(String raw) {
+        if (raw == null)
             return null;
-        }
+        String s = raw.trim().replace("\"", "").replace(",", ".");
         try {
-            return Double.parseDouble(raw);
-        } catch (NumberFormatException e) {
-            showError("Invalid number", label + " must be a valid number.");
+            return Double.parseDouble(s);
+        } catch (Exception e) {
             return null;
         }
     }
 
-    private static void showError(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    private static void showError(String title, String msg) {
+        Alert a = new Alert(Alert.AlertType.ERROR);
+        a.setTitle(title);
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
+    }
+
+    private boolean ensurePortfolio() {
+        if (portfolio == null) {
+            showError("No Portfolio", "Please create or select a portfolio first.");
+            return false;
+        }
+        return true;
     }
 }

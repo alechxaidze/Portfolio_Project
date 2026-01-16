@@ -61,6 +61,15 @@
                         <fx:include fx:id="chartsView" source="charts.fxml"/>
                     </VBox>
                 </Tab>
+
+                <Tab fx:id="whaleWatchTab" text="Whale Watch">
+                    <VBox spacing="12">
+                        <padding>
+                            <Insets top="18" right="18" bottom="18" left="18"/>
+                        </padding>
+                        <fx:include fx:id="whaleWatchView" source="whale_watch.fxml"/>
+                    </VBox>
+                </Tab>
             </tabs>
 
         </TabPane>

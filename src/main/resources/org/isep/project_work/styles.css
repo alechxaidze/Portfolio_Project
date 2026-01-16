@@ -1,131 +1,191 @@
-/* =========================
-   GLOBAL THEME (Modern Dark)
-   ========================= */
+/* =========================================
+   BASE APPLICATION STYLE – LIGHT THEME
+   ========================================= */
 
 .root {
-    -fx-font-family: "Segoe UI", "Inter", "Arial";
-    -fx-background-color: #0f1222;
-    -fx-text-fill: #e8eaf0;
+    -fx-font-family: "Segoe UI", "Arial";
+    -fx-background-color: #f5f6fa;
+    -fx-text-fill: #1f2937;
 }
 
-/* Typography */
-.h1 { -fx-font-size: 26px; -fx-font-weight: 800; -fx-text-fill: #ffffff; }
-.h2 { -fx-font-size: 18px; -fx-font-weight: 700; -fx-text-fill: #ffffff; }
-.muted { -fx-text-fill: #9aa3b2; }
-.small { -fx-font-size: 12px; }
+/* ---------- TEXT STYLES ---------- */
 
-/* Containers */
+.h1 {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
+}
+
+.h2 {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
+}
+
+.muted {
+    -fx-text-fill: #6b7280;
+}
+
+.small {
+    -fx-font-size: 12px;
+}
+
+/* ---------- LAYOUT CONTAINERS ---------- */
+
 .page {
-    -fx-padding: 24;
-    -fx-spacing: 18;
-    -fx-background-color: #0f1222;
+    -fx-padding: 20;
+    -fx-spacing: 14;
+    -fx-background-color: #f5f6fa;
 }
 
 .card {
-    -fx-background-color: rgba(255,255,255,0.05);
-    -fx-background-radius: 16;
-    -fx-padding: 18;
-    -fx-border-radius: 16;
-    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12;
+    -fx-padding: 16;
+    -fx-border-radius: 12;
+    -fx-border-color: #e5e7eb;
 }
 
 .card-strong {
-    -fx-background-color: rgba(255,255,255,0.07);
-    -fx-background-radius: 16;
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 14;
     -fx-padding: 18;
-    -fx-border-radius: 16;
-    -fx-border-color: rgba(255,255,255,0.10);
+    -fx-border-radius: 14;
+    -fx-border-color: #d1d5db;
 }
 
-/* Inputs */
-.text-field, .password-field, .combo-box, .date-picker {
-    -fx-background-color: rgba(255,255,255,0.06);
-    -fx-text-fill: #e8eaf0;
-    -fx-prompt-text-fill: rgba(232,234,240,0.45);
-    -fx-background-radius: 10;
-    -fx-border-radius: 10;
-    -fx-border-color: rgba(255,255,255,0.10);
-    -fx-padding: 10 12;
+/* ---------- TOP BAR ---------- */
+
+.topbar {
+    -fx-background-color: #ffffff;
+    -fx-padding: 12 16;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
 }
 
-.text-field:focused, .password-field:focused, .combo-box:focused, .date-picker:focused {
-    -fx-border-color: rgba(122,162,255,0.8);
+/* ---------- INPUT FIELDS ---------- */
+
+.text-field,
+.password-field,
+.combo-box,
+.date-picker {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #9ca3af;
+
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #d1d5db;
+
+    -fx-padding: 8 10;
 }
 
-/* Buttons */
+.text-field:focused,
+.password-field:focused,
+.combo-box:focused,
+.date-picker:focused {
+    -fx-border-color: #3b82f6;
+}
+
+/* ---------- BUTTONS ---------- */
+
 .button {
-    -fx-background-color: rgba(255,255,255,0.08);
-    -fx-text-fill: #e8eaf0;
-    -fx-background-radius: 10;
-    -fx-padding: 10 14;
+    -fx-background-color: #f3f4f6;
+    -fx-text-fill: #111827;
+
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #e5e7eb;
+
+    -fx-padding: 8 12;
     -fx-cursor: hand;
 }
 
 .button:hover {
-    -fx-background-color: rgba(255,255,255,0.12);
+    -fx-background-color: #e5e7eb;
 }
 
+/* Primary action button */
 .btn-primary {
-    -fx-background-color: #7aa2ff;
-    -fx-text-fill: #0f1222;
-    -fx-font-weight: 700;
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent;
 }
 
 .btn-primary:hover {
-    -fx-background-color: #92b4ff;
+    -fx-background-color: #1d4ed8;
 }
 
+/* Danger button */
 .btn-danger {
-    -fx-background-color: #ff5c7a;
-    -fx-text-fill: #0f1222;
-    -fx-font-weight: 700;
+    -fx-background-color: #ef4444;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent;
 }
 
-/* Topbar */
-.topbar {
-    -fx-padding: 14 18;
-    -fx-background-color: rgba(255,255,255,0.04);
-    -fx-background-radius: 14;
-    -fx-border-radius: 14;
-    -fx-border-color: rgba(255,255,255,0.08);
+.btn-danger:hover {
+    -fx-background-color: #dc2626;
 }
 
-/* Sidebar */
-.sidebar {
-    -fx-padding: 18;
-    -fx-spacing: 12;
-    -fx-background-color: rgba(255,255,255,0.04);
-    -fx-background-radius: 16;
-    -fx-border-radius: 16;
-    -fx-border-color: rgba(255,255,255,0.08);
-}
+/* ---------- TABLES ---------- */
 
-/* Tables */
 .table-view {
-    -fx-background-color: rgba(255,255,255,0.04);
-    -fx-background-radius: 14;
-    -fx-border-radius: 14;
-    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e5e7eb;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
 }
 
 .table-view .column-header-background {
-    -fx-background-color: rgba(255,255,255,0.06);
-    -fx-background-radius: 14 14 0 0;
+    -fx-background-color: #f9fafb;
 }
 
 .table-view .column-header .label {
-    -fx-text-fill: #e8eaf0;
-    -fx-font-weight: 700;
-}
-
-.table-row-cell {
-    -fx-background-color: transparent;
+    -fx-text-fill: #111827;
+    -fx-font-weight: bold;
 }
 
 .table-row-cell:filled:hover {
-    -fx-background-color: rgba(255,255,255,0.06);
+    -fx-background-color: #f3f4f6;
 }
 
-/* Status text */
-.ok { -fx-text-fill: #33d17a; }
-.bad { -fx-text-fill: #ff5c7a; }
+/* ---------- LIST VIEW ---------- */
+
+.list-view {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e5e7eb;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+}
+
+.list-cell:filled:hover {
+    -fx-background-color: #f3f4f6;
+}
+
+/* ---------- STATUS COLORS ---------- */
+
+.ok {
+    -fx-text-fill: #16a34a;
+}
+
+.bad {
+    -fx-text-fill: #dc2626;
+}
+
+/* ---------- TAB PANE ---------- */
+
+.tab-pane {
+    -fx-background-color: transparent;
+}
+
+.tab {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e5e7eb;
+}
+
+.tab:selected {
+    -fx-background-color: #e5e7eb;
+}

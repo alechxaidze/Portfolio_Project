@@ -17,10 +17,21 @@
     </HBox>
 
     <HBox spacing="14">
-        <VBox styleClass="card" spacing="8" HBox.hgrow="ALWAYS">
+
+        <VBox styleClass="card" spacing="8" prefWidth="260">
             <Label text="Current Balance" styleClass="muted"/>
             <Label fx:id="balanceLabel" text="€0.00" styleClass="h2"/>
             <Label text="Based on your transactions" styleClass="small muted"/>
+
+            <Separator />
+
+            <Label text="Savings Account" styleClass="muted"/>
+            <HBox spacing="10">
+                <TextField fx:id="accountNameField" promptText="Account name (optional)" HBox.hgrow="ALWAYS"/>
+                <Button text="Create" onAction="#handleCreateAccount"/>
+            </HBox>
+
+            <Label fx:id="accountInfoLabel" text="" styleClass="small muted"/>
         </VBox>
 
         <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
@@ -33,9 +44,12 @@
 
             <TextField fx:id="noteField" promptText="Note (optional)"/>
 
-            <Button text="Save Transaction" styleClass="btn-primary" onAction="#addTransaction" maxWidth="Infinity"/>
+            <Button text="Save Transaction" styleClass="btn-primary"
+                    onAction="#addTransaction" maxWidth="Infinity"/>
+
             <Label fx:id="messageLabel" text="" styleClass="small"/>
         </VBox>
+
     </HBox>
 
     <VBox styleClass="card" spacing="10">
