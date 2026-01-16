@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static java.util.UUID.randomUUID;
+
 public class WhaleMonitoringService {
     private static WhaleMonitoringService instance;
     private Map<String, Double> tokenThresholds;
@@ -26,7 +28,7 @@ public class WhaleMonitoringService {
         public boolean isRelatedToPortfolio;
 
         public WhaleAlert() {
-            this.id = UUID.randomUUID().toString();
+            this.id = randomUUID().toString();
             this.timestamp = LocalDateTime.now();
         }
 
@@ -88,14 +90,6 @@ public class WhaleMonitoringService {
                 if (usdValue >= threshold) {
                     WhaleAlert alert = createAlert(tx, blockchain, usdValue, portfolioId != null);
                     activeAlerts.add(alert);
-                    
-                    // Create event if related to portfolio
-                    if (portfolioId != null) {
-                        EventService.getInstance().addEvent(
-                            createEventFromAlert(alert, portfolioId)
-                        );
-                    }
-                    
                     System.out.println("🐋 " + alert);
                 }
             }
@@ -150,24 +144,13 @@ public class WhaleMonitoringService {
         return alert;
     }
 
-    private Event createEventFromAlert(WhaleAlert alert, String portfolioId) {
-        Event event = new Event();
-        event.setTitle("🐋 Whale Alert: " + alert.token);
-        event.setDescription(String.format("Large transaction detected: %.2f %s (≈$%.0f) on %s",
-                alert.amount, alert.token, alert.usdValue, alert.blockchain));
-        event.setDate(alert.timestamp.toLocalDate());
-        event.setType(EventType.OTHER);
-        event.setPortfolioId(portfolioId);
-        return event;
-    }
-
     public List<WhaleAlert> getActiveAlerts() {
         return new ArrayList<>(activeAlerts);
     }
 
-    /**
-     * Get alerts for a specific token
-     */
+    public List<WhaleAlert> getAlertsForToken(String token) {
+        List<WhaleAlert> result = new ArrayList<>();
+        for (WhaleAlert alert : activeAlerts) {
             if (alert.token.equalsIgnoreCase(token)) {
                 result.add(alert);
             }
@@ -175,9 +158,9 @@ public class WhaleMonitoringService {
         return result;
     }
 
-    /**
-     * Get alerts for a specific blockchain
-     */
+    public List<WhaleAlert> getAlertsForBlockchain(String blockchain) {
+        List<WhaleAlert> result = new ArrayList<>();
+        for (WhaleAlert alert : activeAlerts) {
             if (alert.blockchain.equalsIgnoreCase(blockchain)) {
                 result.add(alert);
             }
@@ -185,18 +168,15 @@ public class WhaleMonitoringService {
         return result;
     }
 
-    /**
-     * Clear old alerts (older than 24 hours)
-     */
+    public void clearOldAlerts() {
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(24);
+        activeAlerts.removeIf(alert -> alert.timestamp.isBefore(cutoff));
     }
 
-    /**
-     * Stop monitoring
-     */
     public void shutdown() {
         executor.shutdown();
     }
- */
+
     public static class WhaleTransaction {
         public String blockchain;
         public String fromAddress;

@@ -178,6 +178,8 @@ public class ImportService {
 
         return tx;
     }
+
+    private double parseDouble(String value) {
         try {
             String cleaned = value.replace(",", ".").replaceAll("[^0-9.]", "");
             return Double.parseDouble(cleaned);

@@ -1,5 +1,6 @@
 package service;
 
+import model.Asset;
 import model.Crypto;
 import model.Portfolio;
 
@@ -99,11 +100,11 @@ public class WalletMonitoringService {
         WalletSnapshot snapshot = new WalletSnapshot(address, blockchain);
         ApiService apiService = new ApiService();
 
-        // Simulate fetching balances
         String[] tokens = {"BTC", "ETH", "BNB", "SOL", "ADA", "XRP"};
         Random random = new Random();
 
-            if (random.nextDouble() > 0.4) { // 60% chance of having each token
+        for (String token : tokens) {
+            if (random.nextDouble() > 0.4) {
                 double balance = random.nextDouble() * 100;
                 double price = apiService.getCurrentPrice(token);
                 snapshot.balances.put(token, balance);
@@ -165,9 +166,9 @@ public class WalletMonitoringService {
         return total;
     }
 
-    /**
-     * Monitor all wallets in a portfolio
-     */
+    public void monitorPortfolioWallets(Portfolio portfolio) {
+        for (Asset asset : portfolio.getAssets()) {
+            if (asset instanceof Crypto) {
                 Crypto crypto = (Crypto) asset;
                 if (crypto.getContractAddress() != null && !crypto.getContractAddress().isEmpty()) {
                     monitorWallet(crypto.getBlockchain(), crypto.getContractAddress());
@@ -178,11 +179,11 @@ public class WalletMonitoringService {
         }
     }
 
-    /**
-     * Get all monitored wallets
-     */
-    
-    /**
-     * Stop monitoring
-     */
-    
+    public List<WalletSnapshot> getAllWallets() {
+        return new ArrayList<>(walletSnapshots.values());
+    }
+
+    public void shutdown() {
+        executor.shutdown();
+    }
+}
