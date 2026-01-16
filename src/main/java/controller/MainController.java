@@ -9,32 +9,28 @@ import service.UserService;
 
 public class MainController {
 
-    @FXML
-    private Label userLabel;
-    @FXML
-    private TabPane mainTabPane;
-    @FXML
-    private Tab portfoliosTab;
-    @FXML
-    private Tab savingsTab;
-    @FXML
-    private Tab analysisTab;
+    @FXML private Label userLabel;
 
-    @FXML
-    private PortfolioController portfolioController;
-    @FXML
-    private ChartController chartsController;
+    @FXML private TabPane mainTabPane;
+    @FXML private Tab portfoliosTab;
+    @FXML private Tab savingsTab;
+    @FXML private Tab analysisTab;
+
+    @FXML private PortfolioController portfolioViewController;
+    @FXML private SavingsController savingsViewController;
+    @FXML private ChartController chartsViewController;
 
     @FXML
     public void initialize() {
         if (userLabel != null) {
-            userLabel.setText("Welcome, " + UserService.getCurrentUserName());
+            String name = UserService.getCurrentUserName();
+            userLabel.setText(name == null || name.isBlank() ? "Welcome" : "Welcome, " + name);
         }
+
         if (mainTabPane != null) {
             mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-                if (newTab == analysisTab && chartsController != null) {
-                    // Refresh charts when Analysis tab is selected
-                    chartsController.handleRefresh();
+                if (newTab == analysisTab && chartsViewController != null) {
+                    chartsViewController.handleRefresh();
                 }
             });
         }

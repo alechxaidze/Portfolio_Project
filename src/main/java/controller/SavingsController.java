@@ -1,170 +1,315 @@
 package controller;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
 import model.SavingsAccount;
 import model.Transaction;
 import org.isep.project_work.MainApp;
 import service.SavingsService;
 import service.UserService;
 
-import java.util.Optional;
+import java.time.format.DateTimeFormatter;
 
 public class SavingsController {
 
-    @FXML
-    private ListView<SavingsAccount> savingsList;
-    @FXML
-    private Label balanceLabel;
-    @FXML
-    private Label interestLabel;
-    @FXML
-    private ListView<Transaction> transactionList;
+    @FXML private ListView<SavingsAccount> savingsList;
+    @FXML private Label balanceLabel;
+    @FXML private Label interestLabel;
+    @FXML private ListView<Transaction> transactionList;
 
-    private SavingsService savingsService;
+    @FXML private TextField amountField;
+    @FXML private ComboBox<String> typeBox;
+    @FXML private TextField noteField;
+    @FXML private Label messageLabel;
+    @FXML private ListView<Transaction> transactionsList;
+
+    private final SavingsService savingsService = new SavingsService();
+
+    private final ObservableList<SavingsAccount> savingsItems = FXCollections.observableArrayList();
+    private final ObservableList<Transaction> transactionItems = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
-        savingsService = MainApp.getSavingsService();
+        // Setup for SplitPane UI
+        if (savingsList != null) {
+            savingsList.setItems(savingsItems);
+            savingsList.setCellFactory(list -> new ListCell<>() {
+                @Override
+                protected void updateItem(SavingsAccount item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        return;
+                    }
+                    setText(item.getName() + " • Balance: " + money(item.getBalance()));
+                }
+            });
 
-        if (UserService.getCurrentUser() != null) {
-            savingsList.setItems(FXCollections.observableArrayList(UserService.getCurrentUser().getSavingsAccounts()));
+            savingsList.getSelectionModel().selectedItemProperty().addListener((obs, oldAcc, newAcc) -> {
+                refreshAccountDetails(newAcc);
+            });
         }
 
-        savingsList.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(SavingsAccount item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getName() + " - $" + String.format("%.2f", item.getBalance()));
+        if (transactionList != null) {
+            transactionList.setItems(transactionItems);
+            transactionList.setCellFactory(list -> new ListCell<>() {
+                @Override
+                protected void updateItem(Transaction item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        return;
+                    }
+                    String date = item.getTimestamp() == null
+                            ? ""
+                            : item.getTimestamp().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                    setText(date + " • " + item.getType() + " • " + money(item.getQuantity()));
                 }
-            }
-        });
+            });
+        }
 
-        savingsList.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                updateDetails(newVal);
-            }
-        });
-    }
+        if (typeBox != null) {
+            typeBox.getItems().setAll("Deposit", "Withdraw");
+            typeBox.getSelectionModel().selectFirst();
+        }
 
-    private void updateDetails(SavingsAccount account) {
-        balanceLabel.setText(String.format("$%.2f", account.getBalance()));
-        interestLabel.setText(String.format("%.2f%%", account.getInterestRate()));
-        transactionList.setItems(FXCollections.observableArrayList(account.getTransactions()));
-        transactionList.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(Transaction item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getType() + ": $" + item.getQuantity() + " on " + item.getTimestamp().toLocalDate());
-                }
-            }
-        });
+        if (transactionsList != null) {
+            transactionsList.setItems(transactionItems);
+        }
+
+        loadAccountsIntoUI();
     }
 
     @FXML
     private void handleCreateAccount() {
-        Dialog<SavingsAccount> dialog = new Dialog<>();
-        dialog.setTitle("New Savings Account");
-        dialog.setHeaderText("Create a new Savings Account");
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        if (!requireLogin()) return;
 
-        VBox content = new VBox(10);
-        TextField nameField = new TextField();
-        nameField.setPromptText("Account Name");
-        TextField balanceField = new TextField();
-        balanceField.setPromptText("Initial Balance");
-        TextField rateField = new TextField();
-        rateField.setPromptText("Interest Rate (%)");
+        TextInputDialog nameDialog = new TextInputDialog("Main Savings");
+        nameDialog.setTitle("New Savings Account");
+        nameDialog.setHeaderText("Create a savings account");
+        nameDialog.setContentText("Account name:");
 
-        content.getChildren().addAll(new Label("Name:"), nameField, new Label("Balance:"), balanceField,
-                new Label("Interest Rate:"), rateField);
-        dialog.getDialogPane().setContent(content);
+        String name = nameDialog.showAndWait().orElse("").trim();
+        if (name.isEmpty()) {
+            showError("Savings", "Please enter an account name.");
+            return;
+        }
 
-        dialog.setResultConverter(button -> {
-            if (button == ButtonType.OK) {
-                try {
-                    String name = nameField.getText();
-                    double bal = Double.parseDouble(balanceField.getText());
-                    double rate = Double.parseDouble(rateField.getText());
-                    return new SavingsAccount(name, bal, rate);
-                } catch (NumberFormatException e) {
-                    return null;
-                }
-            }
-            return null;
-        });
+        double initialBalance = askForDouble("Initial Balance", "Enter starting balance:", 0.0);
+        if (Double.isNaN(initialBalance)) return;
 
-        Optional<SavingsAccount> result = dialog.showAndWait();
-        result.ifPresent(account -> {
-            savingsService.createSavingsAccount(account.getName(), account.getBalance(), account.getInterestRate());
-            refreshList();
-        });
+        double interestRate = askForDouble("Interest Rate", "Enter interest rate (%):", 0.0);
+        if (Double.isNaN(interestRate)) return;
+
+        savingsService.createSavingsAccount(name, initialBalance, interestRate);
+        UserService.save();
+
+        loadAccountsIntoUI();
+        showInfo("Done", "Savings account created.");
     }
 
     @FXML
     private void handleDeposit() {
-        SavingsAccount selected = savingsList.getSelectionModel().getSelectedItem();
-        if (selected == null)
+        SavingsAccount acc = getSelectedAccount();
+        if (acc == null) return;
+
+        double amount = askForDouble("Deposit", "How much do you want to deposit?", 0.0);
+        if (Double.isNaN(amount)) return;
+
+        if (amount <= 0) {
+            showError("Deposit", "Amount must be greater than 0.");
             return;
+        }
 
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Deposit");
-        dialog.setHeaderText("Deposit to " + selected.getName());
-        dialog.setContentText("Amount:");
+        savingsService.deposit(acc, amount);
+        UserService.save();
 
-        dialog.showAndWait().ifPresent(amountStr -> {
-            try {
-                double amount = Double.parseDouble(amountStr);
-                savingsService.deposit(selected, amount);
-                refreshList(); // Update balance display in list
-                updateDetails(selected);
-            } catch (NumberFormatException e) {
-                showAlert("Error", "Invalid Amount");
-            }
-        });
+        loadAccountsIntoUI();
+        selectAccount(acc);
     }
 
     @FXML
     private void handleWithdraw() {
-        SavingsAccount selected = savingsList.getSelectionModel().getSelectedItem();
-        if (selected == null)
+        SavingsAccount acc = getSelectedAccount();
+        if (acc == null) return;
+
+        double amount = askForDouble("Withdraw", "How much do you want to withdraw?", 0.0);
+        if (Double.isNaN(amount)) return;
+
+        if (amount <= 0) {
+            showError("Withdraw", "Amount must be greater than 0.");
             return;
+        }
 
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Withdraw");
-        dialog.setHeaderText("Withdraw from " + selected.getName());
-        dialog.setContentText("Amount:");
+        try {
+            savingsService.withdraw(acc, amount);
+            UserService.save();
 
-        dialog.showAndWait().ifPresent(amountStr -> {
-            try {
-                double amount = Double.parseDouble(amountStr);
-                savingsService.withdraw(selected, amount);
-                refreshList();
-                updateDetails(selected);
-            } catch (Exception e) {
-                showAlert("Error", e.getMessage());
-            }
-        });
-    }
-
-    private void refreshList() {
-        if (UserService.getCurrentUser() != null) {
-            savingsList.setItems(FXCollections.observableArrayList(UserService.getCurrentUser().getSavingsAccounts()));
+            loadAccountsIntoUI();
+            selectAccount(acc);
+        } catch (IllegalArgumentException ex) {
+            showError("Withdraw", ex.getMessage());
         }
     }
 
-    private void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setContentText(content);
-        alert.showAndWait();
+    @FXML
+    private void addTransaction() {
+        // This supports old UI where you had amount + type dropdown
+        SavingsAccount acc = getSelectedAccountOrFirst();
+        if (acc == null) return;
+
+        Double amount = parseDouble(amountField == null ? "" : amountField.getText());
+        if (amount == null || amount <= 0) {
+            showError("Savings", "Enter a valid amount.");
+            return;
+        }
+
+        String type = typeBox == null ? "Deposit" : String.valueOf(typeBox.getValue());
+        try {
+            if ("Withdraw".equalsIgnoreCase(type)) {
+                savingsService.withdraw(acc, amount);
+            } else {
+                savingsService.deposit(acc, amount);
+            }
+
+            // Optional note
+            if (noteField != null && acc.getTransactions() != null && !acc.getTransactions().isEmpty()) {
+                String note = noteField.getText() == null ? "" : noteField.getText().trim();
+                if (!note.isBlank()) {
+                    acc.getTransactions().get(acc.getTransactions().size() - 1).setNotes(note);
+                }
+            }
+
+            UserService.save();
+            if (amountField != null) amountField.clear();
+            if (noteField != null) noteField.clear();
+
+            loadAccountsIntoUI();
+            selectAccount(acc);
+
+        } catch (IllegalArgumentException ex) {
+            showError("Savings", ex.getMessage());
+        }
+    }
+
+    @FXML
+    private void goToDashboard() {
+    }
+
+
+    private void loadAccountsIntoUI() {
+        if (UserService.getCurrentUser() == null) {
+            savingsItems.clear();
+            refreshAccountDetails(null);
+            return;
+        }
+
+        var list = UserService.getCurrentUser().getSavingsAccounts();
+        savingsItems.setAll(list == null ? java.util.List.of() : list);
+
+        if (!savingsItems.isEmpty() && savingsList != null && savingsList.getSelectionModel().getSelectedItem() == null) {
+            savingsList.getSelectionModel().selectFirst();
+        }
+
+        refreshAccountDetails(savingsList == null ? null : savingsList.getSelectionModel().getSelectedItem());
+    }
+
+    private void refreshAccountDetails(SavingsAccount account) {
+        if (account == null) {
+            if (balanceLabel != null) balanceLabel.setText("$0.00");
+            if (interestLabel != null) interestLabel.setText("0.00%");
+            transactionItems.clear();
+            return;
+        }
+
+        if (balanceLabel != null) balanceLabel.setText(money(account.getBalance()));
+        if (interestLabel != null) interestLabel.setText(String.format("%.2f%%", account.getInterestRate()));
+
+        transactionItems.setAll(account.getTransactions() == null ? java.util.List.of() : account.getTransactions());
+    }
+
+    private SavingsAccount getSelectedAccount() {
+        if (!requireLogin()) return null;
+
+        SavingsAccount selected = savingsList == null ? null : savingsList.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showError("Savings", "Please select a savings account first.");
+        }
+        return selected;
+    }
+
+    private SavingsAccount getSelectedAccountOrFirst() {
+        if (!requireLogin()) return null;
+
+        SavingsAccount selected = savingsList == null ? null : savingsList.getSelectionModel().getSelectedItem();
+        if (selected != null) return selected;
+
+        var user = UserService.getCurrentUser();
+        if (user.getSavingsAccounts() == null || user.getSavingsAccounts().isEmpty()) {
+            showError("Savings", "Create a savings account first.");
+            return null;
+        }
+        return user.getSavingsAccounts().get(0);
+    }
+
+    private void selectAccount(SavingsAccount acc) {
+        if (savingsList == null || acc == null) return;
+        savingsList.getSelectionModel().select(acc);
+    }
+
+    private boolean requireLogin() {
+        if (UserService.getCurrentUser() != null) return true;
+        showError("Not logged in", "Please login again.");
+        return false;
+    }
+
+    private static String money(double v) {
+        return String.format("$%.2f", v);
+    }
+
+    private static Double parseDouble(String raw) {
+        if (raw == null) return null;
+        String cleaned = raw.trim();
+        if (cleaned.isEmpty()) return null;
+        try {
+            return Double.parseDouble(cleaned);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static double askForDouble(String title, String msg, double defaultValue) {
+        TextInputDialog dialog = new TextInputDialog(String.valueOf(defaultValue));
+        dialog.setTitle(title);
+        dialog.setHeaderText(null);
+        dialog.setContentText(msg);
+
+        String raw = dialog.showAndWait().orElse("").trim();
+        if (raw.isEmpty()) return Double.NaN;
+
+        try {
+            return Double.parseDouble(raw);
+        } catch (NumberFormatException e) {
+            showError("Invalid number", "Please enter a valid number.");
+            return Double.NaN;
+        }
+    }
+
+    private static void showError(String title, String content) {
+        Alert a = new Alert(Alert.AlertType.ERROR);
+        a.setTitle(title);
+        a.setHeaderText(null);
+        a.setContentText(content);
+        a.showAndWait();
+    }
+
+    private static void showInfo(String title, String content) {
+        Alert a = new Alert(Alert.AlertType.INFORMATION);
+        a.setTitle(title);
+        a.setHeaderText(null);
+        a.setContentText(content);
+        a.showAndWait();
     }
 }

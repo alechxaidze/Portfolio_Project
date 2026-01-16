@@ -2,6 +2,7 @@ package controller;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import org.isep.project_work.MainApp;
@@ -9,49 +10,48 @@ import service.UserService;
 
 public class RegisterController {
 
-    @FXML
-    private TextField usernameField;
-    @FXML
-    private TextField emailField;
-    @FXML
-    private PasswordField passwordField;
-    @FXML
-    private PasswordField confirmPasswordField;
+    @FXML private TextField nameField;
+    @FXML private TextField emailField;
+    @FXML private PasswordField passwordField;
+    @FXML private PasswordField confirmPasswordField;
+    @FXML private Label messageLabel;
 
     @FXML
     private void handleRegister() {
-        String username = usernameField.getText().trim();
-        String email = emailField != null ? emailField.getText().trim() : username;
-        String password = passwordField.getText();
-        String confirm = confirmPasswordField.getText();
+        clearMessage();
 
-        if (username.isEmpty() || password.isEmpty()) {
-            showAlert("Error", "Please fill in all required fields.");
+        String name = safeText(nameField);
+        String email = safeText(emailField);
+        String password = passwordField != null ? passwordField.getText() : "";
+        String confirm = confirmPasswordField != null ? confirmPasswordField.getText() : "";
+
+        if (name.isBlank() || email.isBlank() || password.isBlank() || confirm.isBlank()) {
+            showError("Please fill in all fields.");
             return;
         }
 
         if (!password.equals(confirm)) {
-            showAlert("Error", "Passwords do not match.");
+            showError("Passwords do not match.");
             return;
         }
 
         if (password.length() < 3) {
-            showAlert("Error", "Password must be at least 3 characters.");
+            showError("Password must be at least 3 characters.");
             return;
         }
 
-        String userEmail = (email != null && !email.isEmpty()) ? email : username;
+        boolean success = UserService.registerUser(name, email, password);
 
-        boolean success = UserService.registerUser(username, userEmail, password);
         if (success) {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Success");
-            alert.setHeaderText("Welcome to Portfolio Manager!");
-            alert.setContentText("Your account has been created. You are now logged in.");
-            alert.showAndWait();
+            Alert ok = new Alert(Alert.AlertType.INFORMATION);
+            ok.setTitle("Success");
+            ok.setHeaderText("Welcome, " + name + "!");
+            ok.setContentText("Your account is created. You are now logged in.");
+            ok.showAndWait();
+
             MainApp.showDashboard();
         } else {
-            showAlert("Registration Failed", "An account with this email already exists.");
+            showError("An account with this email already exists.");
         }
     }
 
@@ -60,11 +60,21 @@ public class RegisterController {
         MainApp.showLoginScreen();
     }
 
-    private void showAlert(String title, String content) {
+    private static String safeText(TextField field) {
+        return field == null ? "" : field.getText().trim();
+    }
+
+    private void clearMessage() {
+        if (messageLabel != null) messageLabel.setText("");
+    }
+
+    private void showError(String msg) {
+        if (messageLabel != null) messageLabel.setText(msg);
+
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
+        alert.setTitle("Register");
         alert.setHeaderText(null);
-        alert.setContentText(content);
+        alert.setContentText(msg);
         alert.showAndWait();
     }
 }

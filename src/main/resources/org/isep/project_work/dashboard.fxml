@@ -1,43 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Tab?>
-<?import javafx.scene.control.TabPane?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ToolBar?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="controller.MainController">
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controller.MainController"
+            stylesheets="@styles.css"
+            style="-fx-background-color: #0f1222;">
+
     <top>
-        <ToolBar>
-            <Label text="Portfolio Manager" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-            <Region HBox.hgrow="ALWAYS" style="-fx-min-width: 0; -fx-pref-width: 10000;"/>
-            <Label fx:id="userLabel" text="Welcome, Guest"/>
-            <Button text="Logout" onAction="#handleLogout"/>
-        </ToolBar>
+        <HBox spacing="12" alignment="CENTER_LEFT" styleClass="topbar">
+            <padding>
+                <Insets top="16" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <Label fx:id="userLabel" text="Welcome" styleClass="h2"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Logout" onAction="#handleLogout" styleClass="btn-danger"/>
+        </HBox>
     </top>
+
     <center>
-        <TabPane tabClosingPolicy="UNAVAILABLE" fx:id="mainTabPane">
+        <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE">
+
             <tabs>
-                <Tab text="📊 Portfolios" fx:id="portfoliosTab">
-                    <content>
-                        <fx:include source="portfolio.fxml" fx:id="portfolio"/>
-                    </content>
+                <Tab fx:id="portfoliosTab" text="Portfolios">
+                    <VBox spacing="12">
+                        <padding>
+                            <Insets top="18" right="18" bottom="18" left="18"/>
+                        </padding>
+
+                        <Label text="Portfolios" styleClass="h1"/>
+                        <Label text="Manage your assets, transactions, and performance." styleClass="muted"/>
+                        <fx:include fx:id="portfolioView" source="portfolio.fxml"/>
+                    </VBox>
                 </Tab>
-                <Tab text="💰 Savings" fx:id="savingsTab">
-                    <content>
-                        <fx:include source="savings.fxml" fx:id="savings"/>
-                    </content>
+
+                <Tab fx:id="savingsTab" text="Savings">
+                    <VBox spacing="12">
+                        <padding>
+                            <Insets top="18" right="18" bottom="18" left="18"/>
+                        </padding>
+
+                        <Label text="Savings" styleClass="h1"/>
+                        <Label text="Track savings accounts, deposits, and withdrawals." styleClass="muted"/>
+                        <fx:include fx:id="savingsView" source="savings.fxml"/>
+                    </VBox>
                 </Tab>
-                <Tab text="📈 Analysis" fx:id="analysisTab">
-                    <content>
-                        <fx:include source="charts.fxml" fx:id="charts"/>
-                    </content>
+
+                <Tab fx:id="analysisTab" text="Analysis">
+                    <VBox spacing="12">
+                        <padding>
+                            <Insets top="18" right="18" bottom="18" left="18"/>
+                        </padding>
+
+                        <Label text="Analysis" styleClass="h1"/>
+                        <Label text="Charts and portfolio insights." styleClass="muted"/>
+                        <fx:include fx:id="chartsView" source="charts.fxml"/>
+                    </VBox>
                 </Tab>
             </tabs>
+
         </TabPane>
     </center>
+
 </BorderPane>

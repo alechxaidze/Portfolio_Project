@@ -2,70 +2,51 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
-<?import javafx.geometry.Insets?>
 
-<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="controller.RegisterController"
-           stylesheets="@styles.css" styleClass="auth-background">
-    
-    <VBox alignment="CENTER" spacing="0">
-        
-        <VBox styleClass="auth-card" spacing="18" alignment="CENTER" maxWidth="420" maxHeight="620">
-            <padding><Insets top="35" right="40" bottom="35" left="40"/></padding>
-            
-            <VBox alignment="CENTER" spacing="8">
-                <Label text="🚀" style="-fx-font-size: 42px;"/>
-                <Label text="Create Account" styleClass="auth-title"/>
-                <Label text="Start tracking your portfolio today" styleClass="auth-subtitle"/>
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="controller.RegisterController"
+           stylesheets="@styles.css"
+           style="-fx-background-color: #0f1222;">
+
+    <VBox spacing="14" maxWidth="460" styleClass="card-strong" alignment="CENTER">
+        <Label text="Create Account" styleClass="h1"/>
+        <Label text="It takes less than a minute" styleClass="muted"/>
+
+        <HBox spacing="10" maxWidth="400">
+            <VBox spacing="8" HBox.hgrow="ALWAYS">
+                <Label text="Name" styleClass="muted"/>
+                <TextField fx:id="nameField" promptText="Your name"/>
             </VBox>
-            
-            <Separator styleClass="auth-divider"/>
-            
-            <VBox spacing="12" alignment="CENTER">
-                
-                <VBox spacing="4" alignment="CENTER_LEFT">
-                    <Label text="Username" styleClass="field-label"/>
-                    <TextField fx:id="usernameField" promptText="Choose a username" 
-                               styleClass="auth-field" prefWidth="300"/>
-                </VBox>
-                
-                <VBox spacing="4" alignment="CENTER_LEFT">
-                    <Label text="Email Address" styleClass="field-label"/>
-                    <TextField fx:id="emailField" promptText="Enter your email" 
-                               styleClass="auth-field" prefWidth="300"/>
-                </VBox>
-                
-                <VBox spacing="4" alignment="CENTER_LEFT">
-                    <Label text="Password" styleClass="field-label"/>
-                    <PasswordField fx:id="passwordField" promptText="Create a password" 
-                                   styleClass="auth-field" prefWidth="300"/>
-                </VBox>
-                
-                <VBox spacing="4" alignment="CENTER_LEFT">
-                    <Label text="Confirm Password" styleClass="field-label"/>
-                    <PasswordField fx:id="confirmPasswordField" promptText="Confirm your password" 
-                                   styleClass="auth-field" prefWidth="300"/>
-                </VBox>
-                
-                <HBox alignment="CENTER_LEFT" spacing="5">
-                    <CheckBox styleClass="auth-checkbox"/>
-                    <Label text="I agree to the Terms of Service" styleClass="auth-link-text" style="-fx-font-size: 11px;"/>
-                </HBox>
-                
+            <VBox spacing="8" HBox.hgrow="ALWAYS">
+                <Label text="Email" styleClass="muted"/>
+                <TextField fx:id="emailField" promptText="student@mail.com"/>
             </VBox>
-            
-            <VBox spacing="12" alignment="CENTER">
-                <Button text="Create Account" onAction="#handleRegister" 
-                        styleClass="auth-button-primary" prefWidth="300" prefHeight="45"/>
-                
-                <HBox alignment="CENTER" spacing="5">
-                    <Label text="Already have an account?" styleClass="auth-link-text"/>
-                    <Button text="Sign In" onAction="#handleBack" 
-                            styleClass="auth-button-link"/>
-                </HBox>
-            </VBox>
-            
+        </HBox>
+
+        <VBox spacing="8" maxWidth="400" alignment="CENTER_LEFT">
+            <Label text="Password" styleClass="muted"/>
+            <PasswordField fx:id="passwordField" promptText="Create a password"/>
         </VBox>
-        
+
+        <VBox spacing="8" maxWidth="400" alignment="CENTER_LEFT">
+            <Label text="Confirm Password" styleClass="muted"/>
+            <PasswordField fx:id="confirmPasswordField" promptText="Re-type password"/>
+        </VBox>
+
+        <Label fx:id="messageLabel" text="" styleClass="small"/>
+
+        <HBox spacing="10" maxWidth="400">
+            <Button text="Create Account"
+                    styleClass="btn-primary"
+                    onAction="#handleRegister"
+                    HBox.hgrow="ALWAYS"
+                    maxWidth="Infinity"/>
+            <Button text="Back"
+                    onAction="#handleBack"
+                    HBox.hgrow="ALWAYS"
+                    maxWidth="Infinity"/>
+        </HBox>
     </VBox>
+
 </StackPane>
